@@ -1,3 +1,4 @@
+from typing import Any
 import pygame
 from pygame.sprite import Sprite
 
@@ -21,7 +22,7 @@ class Ailen(Sprite):
         #存储外星人的精确水平位置
         self.x = float(self.rect.x)
 
-        def update(self):
-            '''向右移动外星人'''
-            self.x += self.settings.alien_speed
-            self.rect.x = self.x
+    def update(self):
+        '''向右移动外星人'''
+        self.x += self.settings.alien_speed
+        self.rect.x = self.x
