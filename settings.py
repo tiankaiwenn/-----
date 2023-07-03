@@ -24,3 +24,9 @@ class Settings:
         self.fleet_drop_speed = 10
         #fleet_direction为1时表示向右移动，为-1时表示向左移动
         self.fleet_direction = 1
+
+        #开始按钮设置
+        self.button_width = 200
+        self.button_height = 50
+        self.button_color = (0, 135, 0)
+        self.text_color = (255, 255, 255)
