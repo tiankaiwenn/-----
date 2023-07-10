@@ -5,11 +5,13 @@
 
 import sys
 from time import sleep
+from pathlib import Path
 
 import pygame
 
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
 from button import Button
 from ship import Ship
 from bullet import Bullet
@@ -26,11 +28,19 @@ class AilenInvasion:
         self.settings = Settings()
 
         self.screen = pygame.display.set_mode(
-            (self.settings.screen_width, self.settings.screen_height))
+                (self.settings.screen_width, self.settings.screen_height))
         pygame.display.set_caption('外星人入侵')
 
-        #创建一个用于存储游戏统计信息的类
+        #创建存储游戏统计信息的实例，并创建记分牌
         self.stats = GameStats(self)
+        self.scoreboard = Scoreboard(self)
+
+        #从high_score.txt中读取最高分
+        try:
+            path = Path('high_score.txt')
+            self.stats.high_score = int(path.read_text().rstrip())
+        except FileNotFoundError:
+            pass
 
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
@@ -77,9 +87,13 @@ class AilenInvasion:
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = True
         elif event.key == pygame.K_q:
+            path = Path('high_score.txt')
+            path.write_text(str(self.stats.high_score))
             sys.exit()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
+        elif event.key == pygame.K_p:
+            self._start_game()
 
     def _check_keyup_events(self, event):
         '''响应释放'''
@@ -92,20 +106,32 @@ class AilenInvasion:
         '''在玩家单击Play按钮时开始新游戏'''
         button_clicked = self.play_button.rect.collidepoint(mouse_pos)
         if button_clicked and not self.game_active:
-            #重置游戏的统计信息
-            self.stats.reset_stats()
-            self.game_active = True
+            self._start_game()        
 
-            #清空外星人列表和子弹列表
-            self.bullets.empty()
-            self.aliens.empty()
+    def _start_game(self):
+        '''开始游戏'''
+        #还原游戏设置
+        self.settings.initialize_dynamic_settings()
 
-            #创建一个新的外星舰队，并将飞船放在屏幕底部的中央
-            self._create_fleet()
-            self.ship.center_ship()
+        #重置游戏的统计信息
+        self.stats.reset_stats()
+        self.scoreboard.prep_score()
+        self.scoreboard.prep_level()
+        self.scoreboard.prep_ships()
+        self.scoreboard.prep_high_score()
+        self.game_active = True
 
-            #隐藏光标
-            pygame.mouse.set_visible(False)
+        #清空外星人列表和子弹列表
+        self.bullets.empty()
+        self.aliens.empty()
+
+        #创建一个新的外星舰队，并将飞船放在屏幕底部的中央
+        self._create_fleet()
+        self.ship.center_ship()
+
+        #隐藏光标
+        pygame.mouse.set_visible(False)
+
 
     def _update_bullets(self):
         '''更新子弹的位置并删除已消失的子弹'''
@@ -123,12 +149,23 @@ class AilenInvasion:
         '''响应子弹与外星人的碰撞'''
         #删除发生碰撞的子弹和外星人
         collisions = pygame.sprite.groupcollide(
-            self.bullets, self.aliens, True, True)
+                self.bullets, self.aliens, True, True)
+        
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.scoreboard.prep_score()
+            self.scoreboard.check_high_score()
 
         if not self.aliens:
             #删除现有的所有子弹，并创建一个新的外星舰队
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
+
+            #提高等级
+            self.stats.level += 1
+            self.scoreboard.prep_level()
 
     def _fire_bullet(self):
         '''创建一颗子弹，并将其加入编组bullets'''
@@ -151,8 +188,9 @@ class AilenInvasion:
     def _ship_hit(self):
         '''响应飞船与外星人的碰撞'''
         if self.stats.ships_left > 1:
-            #将ships_left减1
+            #将ships_left减1并更新记分牌
             self.stats.ships_left -= 1
+            self.scoreboard.prep_ships()
 
             #清空外星人列表和子弹列表
             self.bullets.empty()
@@ -221,6 +259,9 @@ class AilenInvasion:
             bullet.draw_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
+
+        #显示得分
+        self.scoreboard.show_score()
 
         if not self.game_active:
             self.play_button.draw_button()

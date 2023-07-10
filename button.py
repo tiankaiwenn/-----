@@ -13,7 +13,7 @@ class Button:
         self.width = self.settings.button_width
         self.height = self.settings.button_height
         self.button_color = self.settings.button_color
-        self.text_color = self.settings.text_color
+        self.text_color = self.settings.button_text_color
         self.font = pygame.font.SysFont(None, 48)
 
         #创建按钮的rect对象，并使其居中
