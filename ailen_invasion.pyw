@@ -86,7 +86,7 @@ class AilenInvasion:
             self.ship.moving_right = True
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = True
-        elif event.key == pygame.K_q:
+        elif event.key == pygame.K_ESCAPE:
             path = Path('high_score.txt')
             path.write_text(str(self.stats.high_score))
             sys.exit()
