@@ -16,7 +16,7 @@ class Scoreboard:
 
         #显示得分时使用的字体设置
         self.text_color = self.settings.score_text_color
-        self.font = pygame.font.Font('microsoftyahei', 48)
+        self.font = pygame.font.Font('microsoftyahei.TTF', 48)
 
         #准备包含最高分和当前得分的图像
         self.prep_score()
